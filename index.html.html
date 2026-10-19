@@ -1,0 +1,993 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Pokémon Virtual Pet Habitat</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap">
+<style>
+/* Layout: navy handheld-style top bar over a full-bleed pixel meadow (65% sky and hills, 35% walking ground split into 5 depth lanes). Single deliberate look: a bright game screen. */
+:root {
+  --ink: #1b1f3b;
+  --ink-deep: #0b0e22;
+  --paper: #eaf0dc;
+  --paper-2: #cfdab9;
+  --gold: #ffcb05;
+  --gold-deep: #a97f00;
+  --dex-red: #dc0a2d;
+  --dex-red-deep: #8f0620;
+  --blue: #3b4cca;
+  --muted: #566086;
+  --font-display: 'Press Start 2P', 'Courier New', monospace;
+  --font-body: 'VT323', 'Courier New', monospace;
+  color-scheme: light;
+}
+html, body { height: 100%; }
+body {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  overflow: hidden;
+  background: var(--ink-deep);
+  color: var(--paper);
+  font-family: var(--font-body);
+  font-size: 20px;
+  line-height: 1.2;
+}
+button, input { font-family: inherit; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* top bar */
+.bar {
+  position: relative;
+  z-index: 500;
+  flex: 0 0 auto;
+  background: var(--ink);
+  border-bottom: 4px solid var(--gold);
+}
+.bar-in {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+  padding-block: 10px 14px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.brand svg { flex: 0 0 auto; width: 34px; height: 34px; }
+.brand h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--gold);
+  text-wrap: balance;
+}
+.brand p { margin: 2px 0 0; font-size: 18px; color: #9fa8d8; }
+.picker { display: flex; align-items: flex-start; gap: 12px; flex: 1 1 300px; min-width: 0; max-width: 580px; margin-left: auto; }
+.combo { position: relative; flex: 1 1 auto; min-width: 0; }
+#search {
+  box-sizing: border-box;
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  font-size: 23px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 3px solid var(--ink-deep);
+  border-radius: 0;
+  box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.14);
+  outline: none;
+}
+#search::placeholder { color: var(--muted); }
+#search:focus-visible { box-shadow: 0 0 0 3px var(--gold), inset 0 3px 0 rgba(0, 0, 0, 0.14); }
+#dexlist {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 600;
+  max-height: min(320px, 46vh);
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  background: var(--paper);
+  border: 3px solid var(--ink-deep);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.35);
+}
+#dexlist li { display: flex; align-items: baseline; gap: 12px; padding: 6px 12px; font-size: 22px; color: var(--ink); cursor: pointer; }
+#dexlist li .n { min-width: 3.4ch; font-size: 19px; color: var(--muted); font-variant-numeric: tabular-nums; }
+#dexlist li.cur::after { content: ""; align-self: center; width: 8px; height: 8px; margin-left: auto; background: var(--dex-red); }
+#dexlist li.active { background: var(--blue); color: #fff; }
+#dexlist li.active .n { color: #cdd4ff; }
+#dexlist li.none { cursor: default; color: var(--muted); }
+.btn {
+  flex: 0 0 auto;
+  height: 44px;
+  padding: 0 16px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--gold);
+  border: 3px solid var(--ink-deep);
+  border-radius: 0;
+  cursor: pointer;
+  box-shadow: 0 4px 0 var(--gold-deep), 0 4px 0 3px var(--ink-deep);
+}
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--gold-deep), 0 1px 0 3px var(--ink-deep); }
+.btn:disabled, .btn:disabled:active { color: #8089b0; background: #3a4066; cursor: not-allowed; transform: none; box-shadow: 0 4px 0 #262b4c, 0 4px 0 3px var(--ink-deep); }
+.btn:focus-visible, .x:focus-visible, .pet:focus-visible { outline: 3px dashed #fff; outline-offset: 3px; }
+.btn.ghost { background: var(--paper); box-shadow: 0 4px 0 var(--paper-2), 0 4px 0 3px var(--ink-deep); }
+.btn.ghost:active { box-shadow: 0 1px 0 var(--paper-2), 0 1px 0 3px var(--ink-deep); }
+.btn.danger { color: #fff; background: var(--dex-red); box-shadow: 0 4px 0 var(--dex-red-deep), 0 4px 0 3px var(--ink-deep); }
+.btn.danger:active { box-shadow: 0 1px 0 var(--dex-red-deep), 0 1px 0 3px var(--ink-deep); }
+
+/* habitat */
+#habitat { position: relative; flex: 1 1 auto; min-height: 360px; overflow: hidden; isolation: isolate; background: #5db6f2; }
+#bg { position: absolute; z-index: 0; inset: 0; display: block; width: 100%; height: 100%; }
+#pets { position: absolute; z-index: 5; inset: 0; overflow: hidden; pointer-events: none; }
+.pet { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: auto; cursor: pointer; will-change: transform; outline: none; -webkit-tap-highlight-color: transparent; }
+.pet .body { position: absolute; left: 0; top: 0; min-width: 48px; min-height: 48px; transform-origin: 50% 100%; transform: translate(-50%, -100%) scale(var(--s, 1)); }
+.pet .shadow { position: absolute; z-index: 0; left: 50%; bottom: -3px; width: 72%; height: 10px; transform: translateX(-50%); background: rgba(14, 54, 22, 0.34); border-radius: 50%; }
+.pet img { position: relative; z-index: 1; display: block; box-sizing: border-box; min-width: 48px; min-height: 48px; object-fit: contain; image-rendering: pixelated; transform: scaleX(-1); user-select: none; -webkit-user-drag: none; }
+.pet:hover img, .pet:focus-visible img {
+  filter: brightness(1.12) drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff);
+}
+.pet .tag {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: 100%;
+  padding: 0 0.4em;
+  font-size: calc(21px / var(--s, 1));
+  line-height: 1.25;
+  white-space: nowrap;
+  color: var(--paper);
+  background: var(--ink);
+  border: 2px solid var(--ink-deep);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 0);
+}
+.pet:hover .tag, .pet:focus-visible .tag { opacity: 1; }
+.hud {
+  position: absolute;
+  z-index: 2000;
+  top: 12px;
+  right: max(12px, env(safe-area-inset-right, 0px));
+  display: grid;
+  gap: 6px;
+  padding: 8px 12px;
+  font-family: var(--font-display);
+  font-size: 10px;
+  line-height: 1.3;
+  color: var(--paper);
+  background: rgba(27, 31, 59, 0.9);
+  border: 3px solid var(--ink-deep);
+}
+.hud b { font-weight: 400; color: var(--gold); font-variant-numeric: tabular-nums; }
+.hud span { font-family: var(--font-body); font-size: 17px; color: #9fa8d8; }
+.hint {
+  position: absolute;
+  z-index: 2000;
+  top: 22%;
+  left: 50%;
+  box-sizing: border-box;
+  width: min(430px, calc(100% - 32px));
+  padding: 14px 16px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 4px solid var(--ink-deep);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.3);
+  transform: translateX(-50%);
+}
+.hint h2 { margin: 0 0 8px; font-family: var(--font-display); font-size: 11px; line-height: 1.5; font-weight: 400; color: var(--dex-red); }
+.hint p { margin: 0; font-size: 22px; }
+#toast {
+  position: fixed;
+  z-index: 300;
+  left: 50%;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+  max-width: calc(100% - 32px);
+  padding: 10px 14px;
+  font-family: var(--font-display);
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--gold);
+  background: var(--ink);
+  border: 3px solid var(--ink-deep);
+  box-shadow: 0 0 0 2px var(--gold);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 8px);
+  transition: opacity 0.18s steps(3), transform 0.18s steps(3);
+}
+#toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+/* modal */
+.overlay {
+  position: fixed;
+  z-index: 200;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: max(16px, env(safe-area-inset-top, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  background: rgba(11, 14, 34, 0.74);
+}
+.dex {
+  box-sizing: border-box;
+  width: min(560px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  color: var(--ink);
+  background: var(--paper);
+  border: 4px solid var(--ink-deep);
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.35);
+  animation: pop 0.18s steps(3);
+}
+@keyframes pop { from { transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.dex-head { display: flex; align-items: center; gap: 12px; padding: 10px 12px; font-family: var(--font-display); font-size: 11px; color: #fff; background: var(--dex-red); border-bottom: 4px solid var(--ink-deep); }
+.led { flex: 0 0 auto; width: 20px; height: 20px; background: #5ad7ff; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 0 3px var(--ink-deep); }
+.x { margin-left: auto; width: 34px; height: 34px; padding: 0; font-family: var(--font-display); font-size: 12px; color: var(--ink); background: var(--paper); border: 3px solid var(--ink-deep); border-radius: 0; cursor: pointer; }
+.dex-body { display: flex; flex-wrap: wrap; gap: 16px; padding: 16px; }
+.stage {
+  box-sizing: border-box;
+  flex: 1 1 220px;
+  min-width: 0;
+  max-width: 320px;
+  aspect-ratio: 1 / 1;
+  padding: 8px;
+  border: 3px solid var(--ink-deep);
+  background-color: var(--paper-2);
+  background-color: color-mix(in srgb, var(--tc, #a8a878) 38%, #ffffff);
+  background-image:
+    linear-gradient(45deg, rgba(255, 255, 255, 0.3) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.3) 75%),
+    linear-gradient(45deg, rgba(255, 255, 255, 0.3) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.3) 75%);
+  background-size: 24px 24px;
+  background-position: 0 0, 12px 12px;
+}
+.stage img { display: block; width: 100%; height: 100%; object-fit: contain; opacity: 0; filter: drop-shadow(0 6px 0 rgba(0, 0, 0, 0.18)); transition: opacity 0.2s steps(4); }
+.stage img.ready { opacity: 1; }
+.stage img.pix { image-rendering: pixelated; }
+.info { display: flex; flex: 1 1 200px; flex-direction: column; gap: 10px; min-width: 0; }
+.no { margin: 0; font-size: 24px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.info h2 { margin: 0; font-family: var(--font-display); font-size: clamp(15px, 4.4vw, 20px); line-height: 1.35; font-weight: 400; color: var(--ink); text-wrap: balance; overflow-wrap: anywhere; }
+.types { display: flex; flex-wrap: wrap; gap: 8px; }
+.badge { display: inline-block; padding: 7px 10px 6px; font-family: var(--font-display); font-size: 10px; line-height: 1; letter-spacing: 0.04em; text-transform: uppercase; border: 3px solid var(--ink-deep); box-shadow: 0 3px 0 rgba(0, 0, 0, 0.25); }
+.stats { display: grid; gap: 4px; margin: 6px 0 0; }
+.stats div { display: flex; justify-content: space-between; gap: 12px; padding-top: 4px; border-top: 3px dashed var(--paper-2); font-size: 22px; }
+.stats dt { color: var(--muted); }
+.stats dd { margin: 0; font-variant-numeric: tabular-nums; }
+.dex-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 14px; padding: 0 16px 20px; }
+
+@media (max-width: 520px) {
+  .brand h1 { font-size: 11px; }
+  .picker { flex-basis: 100%; max-width: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dex { animation: none; }
+  #toast, .stage img { transition: none; }
+}
+</style>
+
+<header class="bar">
+  <div class="bar-in">
+    <div class="brand">
+      <svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
+        <circle cx="8" cy="8" r="7.5" fill="#0b0e22"/>
+        <path d="M1.5 8a6.5 6.5 0 0 1 13 0z" fill="#dc0a2d"/>
+        <path d="M1.5 8a6.5 6.5 0 0 0 13 0z" fill="#f4f4f4"/>
+        <rect x="0.5" y="7" width="15" height="2" fill="#0b0e22"/>
+        <circle cx="8" cy="8" r="2.5" fill="#0b0e22"/>
+        <circle cx="8" cy="8" r="1.4" fill="#f4f4f4"/>
+      </svg>
+      <div>
+        <h1>Pokémon</h1>
+        <p>v1.0.0</p>
+      </div>
+    </div>
+    <form class="picker" id="picker" autocomplete="off">
+      <div class="combo">
+        <label class="sr" for="search">Search the Pokédex</label>
+        <input id="search" type="text" role="combobox" aria-expanded="false" aria-controls="dexlist" aria-autocomplete="list" placeholder="Select a Pokémon" spellcheck="false" autocapitalize="off" autocomplete="off">
+        <ul id="dexlist" role="listbox" aria-label="Pokémon" hidden></ul>
+        <select id="pokemonSelect" class="sr" tabindex="-1" aria-hidden="true"><option value="" disabled selected>Select a Pokémon</option></select>
+      </div>
+      <button type="submit" class="btn" id="add" disabled>Add</button>
+    </form>
+  </div>
+</header>
+
+<main id="habitat">
+  <canvas id="bg" aria-hidden="true"></canvas>
+  <div id="pets"></div>
+  <div class="hud" aria-hidden="true">
+    <div>Pets <b id="hud-count">0 / 36</b></div>
+    <span id="hud-dex">Dex: built-in list</span>
+  </div>
+  <div class="hint" id="hint" hidden>
+    <h2>The meadow is empty</h2>
+    <p>Pick a Pokémon in the bar above and press Add. It will walk in from the left.</p>
+  </div>
+</main>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<div class="overlay" id="modal" hidden>
+  <div class="dex" role="dialog" aria-modal="true" aria-labelledby="m-name">
+    <div class="dex-head">
+      <span class="led" aria-hidden="true"></span>
+      <span>Pokédex Entry</span>
+      <button type="button" class="x" id="m-x" aria-label="Close">X</button>
+    </div>
+    <div class="dex-body">
+      <div class="stage" id="m-stage"><img id="m-art" alt=""></div>
+      <div class="info">
+        <p class="no" id="m-no">No. 000</p>
+        <h2 id="m-name">Pokémon</h2>
+        <div class="types" id="m-types"></div>
+        <dl class="stats">
+          <div><dt>Walk speed</dt><dd id="m-speed"></dd></div>
+          <div><dt>Habitat lane</dt><dd id="m-lane"></dd></div>
+        </dl>
+      </div>
+    </div>
+    <div class="dex-foot">
+      <button type="button" class="btn ghost" id="m-cry">Play Cry</button>
+      <button type="button" class="btn danger" id="m-release">Release Pet</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var $ = function (s) { return document.querySelector(s); };
+  var clamp = function (v, a, b) { return Math.max(a, Math.min(b, v)); };
+  var rand = function (a, b) { return a + Math.random() * (b - a); };
+
+  /* ---------- asset URLs ---------- */
+  var API_LIST = 'https://pokeapi.co/api/v2/pokemon?limit=151';
+  var SPRITE = function (id) { return 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/' + id + '.gif'; };
+  var ART = function (id) { return 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/' + id + '.png'; };
+  var CRY = function (id) { return 'https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/' + id + '.ogg'; };
+  var BALL = 'data:image/svg+xml,' + encodeURIComponent(
+    "<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 16 16' shape-rendering='crispEdges'>" +
+    "<circle cx='8' cy='8' r='7.5' fill='#0b0e22'/><path d='M1.5 8a6.5 6.5 0 0 1 13 0z' fill='#dc0a2d'/>" +
+    "<path d='M1.5 8a6.5 6.5 0 0 0 13 0z' fill='#f4f4f4'/><rect x='0.5' y='7' width='15' height='2' fill='#0b0e22'/>" +
+    "<circle cx='8' cy='8' r='2.5' fill='#0b0e22'/><circle cx='8' cy='8' r='1.4' fill='#f4f4f4'/></svg>");
+  var BALL_BG = 'url("' + BALL + '") center / contain no-repeat';
+
+  /* ---------- built-in Pokédex (all 151 with types) ---------- */
+  var RAW = [
+    'Bulbasaur|grass|poison', 'Ivysaur|grass|poison', 'Venusaur|grass|poison', 'Charmander|fire', 'Charmeleon|fire',
+    'Charizard|fire|flying', 'Squirtle|water', 'Wartortle|water', 'Blastoise|water', 'Caterpie|bug',
+    'Metapod|bug', 'Butterfree|bug|flying', 'Weedle|bug|poison', 'Kakuna|bug|poison', 'Beedrill|bug|poison',
+    'Pidgey|normal|flying', 'Pidgeotto|normal|flying', 'Pidgeot|normal|flying', 'Rattata|normal', 'Raticate|normal',
+    'Spearow|normal|flying', 'Fearow|normal|flying', 'Ekans|poison', 'Arbok|poison', 'Pikachu|electric',
+    'Raichu|electric', 'Sandshrew|ground', 'Sandslash|ground', 'Nidoran♀|poison', 'Nidorina|poison',
+    'Nidoqueen|poison|ground', 'Nidoran♂|poison', 'Nidorino|poison', 'Nidoking|poison|ground', 'Clefairy|fairy',
+    'Clefable|fairy', 'Vulpix|fire', 'Ninetales|fire', 'Jigglypuff|normal|fairy', 'Wigglytuff|normal|fairy',
+    'Zubat|poison|flying', 'Golbat|poison|flying', 'Oddish|grass|poison', 'Gloom|grass|poison', 'Vileplume|grass|poison',
+    'Paras|bug|grass', 'Parasect|bug|grass', 'Venonat|bug|poison', 'Venomoth|bug|poison', 'Diglett|ground',
+    'Dugtrio|ground', 'Meowth|normal', 'Persian|normal', 'Psyduck|water', 'Golduck|water',
+    'Mankey|fighting', 'Primeape|fighting', 'Growlithe|fire', 'Arcanine|fire', 'Poliwag|water',
+    'Poliwhirl|water', 'Poliwrath|water|fighting', 'Abra|psychic', 'Kadabra|psychic', 'Alakazam|psychic',
+    'Machop|fighting', 'Machoke|fighting', 'Machamp|fighting', 'Bellsprout|grass|poison', 'Weepinbell|grass|poison',
+    'Victreebel|grass|poison', 'Tentacool|water|poison', 'Tentacruel|water|poison', 'Geodude|rock|ground', 'Graveler|rock|ground',
+    'Golem|rock|ground', 'Ponyta|fire', 'Rapidash|fire', 'Slowpoke|water|psychic', 'Slowbro|water|psychic',
+    'Magnemite|electric|steel', 'Magneton|electric|steel', "Farfetch'd|normal|flying", 'Doduo|normal|flying', 'Dodrio|normal|flying',
+    'Seel|water', 'Dewgong|water|ice', 'Grimer|poison', 'Muk|poison', 'Shellder|water',
+    'Cloyster|water|ice', 'Gastly|ghost|poison', 'Haunter|ghost|poison', 'Gengar|ghost|poison', 'Onix|rock|ground',
+    'Drowzee|psychic', 'Hypno|psychic', 'Krabby|water', 'Kingler|water', 'Voltorb|electric',
+    'Electrode|electric', 'Exeggcute|grass|psychic', 'Exeggutor|grass|psychic', 'Cubone|ground', 'Marowak|ground',
+    'Hitmonlee|fighting', 'Hitmonchan|fighting', 'Lickitung|normal', 'Koffing|poison', 'Weezing|poison',
+    'Rhyhorn|ground|rock', 'Rhydon|ground|rock', 'Chansey|normal', 'Tangela|grass', 'Kangaskhan|normal',
+    'Horsea|water', 'Seadra|water', 'Goldeen|water', 'Seaking|water', 'Staryu|water',
+    'Starmie|water|psychic', 'Mr. Mime|psychic|fairy', 'Scyther|bug|flying', 'Jynx|ice|psychic', 'Electabuzz|electric',
+    'Magmar|fire', 'Pinsir|bug', 'Tauros|normal', 'Magikarp|water', 'Gyarados|water|flying',
+    'Lapras|water|ice', 'Ditto|normal', 'Eevee|normal', 'Vaporeon|water', 'Jolteon|electric',
+    'Flareon|fire', 'Porygon|normal', 'Omanyte|rock|water', 'Omastar|rock|water', 'Kabuto|rock|water',
+    'Kabutops|rock|water', 'Aerodactyl|rock|flying', 'Snorlax|normal', 'Articuno|ice|flying', 'Zapdos|electric|flying',
+    'Moltres|fire|flying', 'Dratini|dragon', 'Dragonair|dragon', 'Dragonite|dragon|flying', 'Mewtwo|psychic',
+    'Mew|psychic'
+  ];
+  var dex = RAW.map(function (s, i) {
+    var a = s.split('|');
+    return { id: i + 1, name: a[0], types: a.slice(1) };
+  });
+
+  var TYPE_COLORS = {
+    normal: '#a8a878', fire: '#f08030', water: '#6890f0', electric: '#f8d030', grass: '#78c850', ice: '#98d8d8',
+    fighting: '#c03028', poison: '#a040a0', ground: '#e0c068', flying: '#a890f0', psychic: '#f85888', bug: '#a8b820',
+    rock: '#b8a038', ghost: '#705898', dragon: '#7038f8', fairy: '#ee99ac', steel: '#b8b8d0'
+  };
+  function textOn(hex) {
+    var r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.5 ? '#1b1f3b' : '#ffffff';
+  }
+  var SPECIAL = { 'nidoran-f': 'Nidoran♀', 'nidoran-m': 'Nidoran♂', 'mr-mime': 'Mr. Mime', 'farfetchd': "Farfetch'd" };
+  function pretty(n) { return SPECIAL[n] || (n.charAt(0).toUpperCase() + n.slice(1)); }
+
+  /* ---------- state ---------- */
+  var MAX = 36;
+  var KEY = 'pokemon-habitat-roster-v2';
+  var habitat = $('#habitat'), bgc = $('#bg'), bctx = bgc.getContext('2d');
+  var petsEl = $('#pets');
+  var pets = [];
+  var openPet = null, lastFocus = null, cry = null, liveDex = false;
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var W = 0, H = 0, GT = 0, GH = 0, DPR = 1, PXS = 4, BW = 0, BH = 0, GTB = 0;
+
+  /* ---------- storage ---------- */
+  function loadRoster() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw === null) return null;
+      var arr = JSON.parse(raw);
+      if (!Array.isArray(arr)) return null;
+      return arr.filter(function (r) { return r && Number.isInteger(r.id) && r.id >= 1 && r.id <= 151; }).slice(0, MAX).map(function (r) {
+        return {
+          uid: String(r.uid || newUid()),
+          id: r.id,
+          speed: clamp(Number(r.speed) || 1.4, 0.8, 2.2),
+          t: clamp(Number(r.t), 0, 1) || 0.5
+        };
+      });
+    } catch (e) { return null; }
+  }
+  function save() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(pets.map(function (p) {
+        return { uid: p.rec.uid, id: p.rec.id, speed: p.rec.speed, t: p.rec.t };
+      })));
+    } catch (e) { /* storage unavailable */ }
+  }
+  function newUid() { return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function makeRec(id, lane) {
+    if (lane === undefined) lane = Math.floor(Math.random() * 5);
+    return {
+      uid: newUid(),
+      id: id,
+      speed: +rand(0.8, 2.2).toFixed(2),
+      t: clamp((lane + 0.5) / 5 + rand(-0.06, 0.06), 0, 1)
+    };
+  }
+
+  /* ---------- scenery ---------- */
+  var scene = document.createElement('canvas'), sctx = scene.getContext('2d');
+  var clouds = [];
+  var CLOUD_A = ['....####........', '..#########.###.', '.##############.', '################', '.oooooooooooooo.'];
+  var CLOUD_B = ['...####.....', '.##########.', '############', '.oooooooooo.'];
+
+  function mulberry(seed) {
+    return function () {
+      seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+      var t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function hill1(x) { return Math.round(GTB * 0.13 + GTB * 0.05 * Math.sin(x * 0.035 + 1.2) + GTB * 0.022 * Math.sin(x * 0.09 + 0.4)); }
+  function hill2(x) { return Math.round(GTB * 0.055 + GTB * 0.03 * Math.sin(x * 0.06 + 3.1) + GTB * 0.012 * Math.sin(x * 0.15)); }
+
+  function buildScene() {
+    PXS = W < 640 ? 3 : 4;
+    BW = Math.ceil(W / PXS); BH = Math.ceil(H / PXS);
+    scene.width = BW; scene.height = BH;
+    GTB = Math.round(BH * 0.65);
+    var r = mulberry(7);
+    function px(x, y, w, h, c) { sctx.fillStyle = c; sctx.fillRect(x, y, w, h); }
+    var i, x, y;
+
+    /* sky bands with a two-row dither at each seam */
+    var skies = ['#4aa8ee', '#5db6f2', '#79c4f5', '#94d1f7', '#b0def9', '#c9e9fb'];
+    var band = GTB / skies.length;
+    for (i = 0; i < skies.length; i++) {
+      var y0 = Math.round(i * band), y1 = Math.round((i + 1) * band);
+      px(0, y0, BW, y1 - y0, skies[i]);
+    }
+    for (i = 1; i < skies.length; i++) {
+      var yb = Math.round(i * band);
+      for (x = 0; x < BW; x++) {
+        if (x % 2 === 0) px(x, yb - 1, 1, 1, skies[i]); else px(x, yb, 1, 1, skies[i - 1]);
+      }
+    }
+
+    /* sun */
+    var R = Math.max(5, Math.round(BH * 0.035));
+    var sx = Math.round(BW * 0.84), sy = Math.round(GTB * 0.24);
+    for (var dy = -R; dy <= R; dy++) {
+      for (var dx = -R; dx <= R; dx++) {
+        var d2 = dx * dx + dy * dy;
+        if (d2 <= R * R) px(sx + dx, sy + dy, 1, 1, d2 <= (R * 0.62) * (R * 0.62) ? '#fff3a3' : '#ffd84a');
+      }
+    }
+
+    /* far and near hills */
+    for (x = 0; x < BW; x++) {
+      var h = hill1(x);
+      px(x, GTB - h, 1, h, '#74c46e');
+      px(x, GTB - h, 1, 1, '#97dc8e');
+    }
+    for (x = 0; x < BW; x++) {
+      var h2 = hill2(x);
+      px(x, GTB - h2, 1, h2, '#5aae5a');
+      px(x, GTB - h2, 1, 1, '#7cc874');
+    }
+
+    /* trees on the near hill */
+    var trees = Math.round(BW / 22);
+    for (i = 0; i < trees; i++) {
+      var tx = Math.floor(r() * BW), base = GTB - hill2(tx), rr = 3 + Math.floor(r() * 3);
+      px(tx, base - 3, 2, 4, '#7a4d2b');
+      var cy = base - 3 - rr;
+      for (var ey = -rr; ey <= rr; ey++) {
+        for (var ex = -rr; ex <= rr; ex++) {
+          var e2 = ex * ex + ey * ey;
+          if (e2 <= rr * rr) px(tx + ex, cy + ey, 1, 1, (ex + ey < -rr * 0.6) ? '#4fb561' : '#2f8a4a');
+        }
+      }
+    }
+
+    /* fence along the horizon */
+    px(0, GTB - 8, BW, 2, '#c99a62'); px(0, GTB - 7, BW, 1, '#8d6a3d');
+    px(0, GTB - 4, BW, 2, '#c99a62'); px(0, GTB - 3, BW, 1, '#8d6a3d');
+    for (x = 6; x < BW; x += 16) {
+      px(x, GTB - 11, 3, 12, '#d8ab70');
+      px(x + 2, GTB - 11, 1, 12, '#8d6a3d');
+      px(x, GTB - 12, 3, 1, '#e9c690');
+    }
+
+    /* ground, five depth lanes */
+    var GHB = BH - GTB;
+    var laneCols = ['#6cbf48', '#73c74e', '#7bcf55', '#83d65d', '#8cdd66'];
+    for (i = 0; i < 5; i++) {
+      var ly0 = GTB + Math.round(i * GHB / 5), ly1 = GTB + Math.round((i + 1) * GHB / 5);
+      px(0, ly0, BW, ly1 - ly0, laneCols[i]);
+    }
+    px(0, GTB, BW, 2, '#4f9a3a');
+    for (i = 1; i < 5; i++) {
+      var lb = GTB + Math.round(i * GHB / 5);
+      for (x = 0; x < BW; x += 8) px(x, lb, 4, 1, '#62b244');
+    }
+    for (i = 0; i < 5; i++) {
+      var a0 = GTB + Math.round(i * GHB / 5), a1 = GTB + Math.round((i + 1) * GHB / 5);
+      var cnt = Math.round(BW / (17 - i * 2)), s = i >= 3 ? 2 : 1, n;
+      for (n = 0; n < cnt; n++) {
+        x = Math.floor(r() * BW); y = a0 + 3 + Math.floor(r() * Math.max(1, a1 - a0 - 5));
+        px(x, y, s, s, '#4f9a3a'); px(x - s, y - s, s, s, '#4f9a3a'); px(x + s, y - s, s, s, '#4f9a3a');
+        px(x, y - s, s, s, '#a6e87c');
+      }
+      var petals = ['#ffffff', '#ff7aa8', '#a9c7ff'];
+      var fl = Math.round(BW / 90);
+      for (n = 0; n < fl; n++) {
+        x = 3 + Math.floor(r() * (BW - 6)); y = a0 + 4 + Math.floor(r() * Math.max(1, a1 - a0 - 8));
+        var pc = petals[Math.floor(r() * petals.length)];
+        px(x, y + 2 * s, s, 2 * s, '#3d8a35');
+        px(x - s, y, s, s, pc); px(x + s, y, s, s, pc); px(x, y - s, s, s, pc); px(x, y + s, s, s, pc);
+        px(x, y, s, s, '#ffd84a');
+      }
+    }
+
+    /* clouds keep their drift across resizes */
+    if (!clouds.length) {
+      for (i = 0; i < 6; i++) {
+        var pat = i % 2 ? CLOUD_B : CLOUD_A;
+        clouds.push({ pat: pat, s: i % 3 === 0 ? 2 : 1, x: Math.random() * BW, y: 0, v: rand(0.015, 0.045), ry: rand(0.04, 0.5) });
+      }
+    }
+    clouds.forEach(function (c) { c.y = Math.floor(GTB * c.ry); });
+  }
+
+  function paint(dt) {
+    var K = PXS * DPR;
+    bctx.imageSmoothingEnabled = false;
+    bctx.drawImage(scene, 0, 0, BW * K, BH * K);
+    for (var i = 0; i < clouds.length; i++) {
+      var c = clouds[i], pat = c.pat, pw = pat[0].length * c.s;
+      if (!reduce) { c.x += c.v * dt; if (c.x > BW + 2) c.x = -pw - 2; }
+      var x0 = Math.floor(c.x), y0 = c.y;
+      for (var r = 0; r < pat.length; r++) {
+        var row = pat[r];
+        for (var q = 0; q < row.length; q++) {
+          var ch = row.charAt(q);
+          if (ch === '.') continue;
+          bctx.fillStyle = ch === '#' ? '#ffffff' : '#cfe7f8';
+          bctx.fillRect(Math.round((x0 + q * c.s) * K), Math.round((y0 + r * c.s) * K), Math.ceil(c.s * K), Math.ceil(c.s * K));
+        }
+      }
+    }
+  }
+
+  /* ---------- pets ---------- */
+  function viewScale() { return clamp(Math.min(W / 1000, H / 620), 0.6, 1.15); }
+
+  function sizeImg(p) {
+    var zoom = clamp(104 / Math.max(p.nh, 1), 1.5, 3) * viewScale();
+    var w = Math.max(p.nw * zoom, 48), h = Math.max(p.nh * zoom, 48);
+    p.img.style.width = w.toFixed(1) + 'px';
+    p.img.style.height = h.toFixed(1) + 'px';
+    p.w = w * p.s;
+  }
+  function layoutPet(p) {
+    var t = p.rec.t;
+    p.s = 0.78 + 0.5 * t;
+    p.y = GT + GH * (0.16 + 0.76 * t);
+    p.body.style.setProperty('--s', p.s.toFixed(3));
+    p.el.style.zIndex = String(Math.round(t * 1000) + 1);
+    sizeImg(p);
+  }
+  function laneOf(rec) { return Math.min(4, Math.floor(rec.t * 5)) + 1; }
+
+  function addPet(rec, startX) {
+    var d = dex[rec.id - 1];
+    var el = document.createElement('div');
+    el.className = 'pet';
+    el.tabIndex = 0;
+    el.setAttribute('role', 'button');
+    el.setAttribute('aria-label', 'Inspect ' + d.name);
+    el.dataset.uid = rec.uid;
+    var body = document.createElement('div'); body.className = 'body';
+    var shadow = document.createElement('div'); shadow.className = 'shadow';
+    var img = new Image(); img.alt = ''; img.draggable = false; img.referrerPolicy = 'no-referrer'; img.style.background = BALL_BG;
+    var tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = d.name;
+    body.appendChild(shadow); body.appendChild(img); body.appendChild(tag);
+    el.appendChild(body);
+    petsEl.appendChild(el);
+    var p = {
+      rec: rec, el: el, body: body, img: img, tag: tag,
+      nw: 40, nh: 40, w: 80, x: startX === undefined ? rand(0, Math.max(W, 200)) : startX, y: 0, s: 1,
+      cur: 0, paused: false, hover: false, fallback: false
+    };
+    img.addEventListener('load', function () {
+      if (p.fallback) { p.nw = 32; p.nh = 32; } else { p.nw = img.naturalWidth || 40; p.nh = img.naturalHeight || 40; }
+      sizeImg(p);
+      img.style.background = 'none';
+    });
+    img.addEventListener('error', function () {
+      if (p.fallback) return;
+      p.fallback = true; img.src = BALL; p.nw = 32; p.nh = 32; sizeImg(p);
+    });
+    img.src = SPRITE(rec.id);
+    el.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') p.hover = true; });
+    el.addEventListener('pointerleave', function () { p.hover = false; });
+    pets.push(p);
+    layoutPet(p);
+    p.el.style.transform = 'translate3d(' + p.x.toFixed(1) + 'px,' + p.y.toFixed(1) + 'px,0)';
+    updateHud();
+    return p;
+  }
+
+  function removePet(p) {
+    var i = pets.indexOf(p);
+    if (i >= 0) pets.splice(i, 1);
+    p.el.remove();
+    save();
+    updateHud();
+  }
+
+  function updateHud() {
+    $('#hud-count').textContent = pets.length + ' / ' + MAX;
+    $('#hint').hidden = pets.length > 0;
+    $('#hud-dex').textContent = liveDex ? 'Dex: PokéAPI live' : 'Dex: built-in list';
+  }
+
+  function spawn(d) {
+    if (pets.length >= MAX) { toast('The meadow is full. Release a pet to make room.'); return; }
+    addPet(makeRec(d.id), -70);
+    save();
+    toast(d.name + ' joined the meadow!');
+  }
+
+  /* ---------- modal ---------- */
+  var overlay = $('#modal'), art = $('#m-art'), stage = $('#m-stage');
+
+  function playCry(id) {
+    stopCry();
+    try {
+      cry = new Audio(CRY(id));
+      cry.volume = 0.6;
+      var pr = cry.play();
+      if (pr && pr.catch) pr.catch(function () {});
+    } catch (e) { /* audio unavailable */ }
+  }
+  function stopCry() {
+    if (cry) { try { cry.pause(); } catch (e) {} cry = null; }
+  }
+
+  function openModal(p) {
+    var d = dex[p.rec.id - 1];
+    lastFocus = document.activeElement;
+    openPet = p; p.paused = true;
+    $('#m-no').textContent = 'No. ' + String(d.id).padStart(3, '0');
+    $('#m-name').textContent = d.name;
+    var types = $('#m-types');
+    types.innerHTML = '';
+    d.types.forEach(function (t) {
+      var b = document.createElement('span');
+      b.className = 'badge';
+      b.textContent = t;
+      b.style.background = TYPE_COLORS[t];
+      b.style.color = textOn(TYPE_COLORS[t]);
+      types.appendChild(b);
+    });
+    stage.style.setProperty('--tc', TYPE_COLORS[d.types[0]]);
+    art.className = '';
+    art.dataset.step = '0';
+    art.alt = 'Official artwork of ' + d.name;
+    art.src = ART(d.id);
+    $('#m-speed').textContent = p.rec.speed.toFixed(1) + ' px/frame';
+    $('#m-lane').textContent = laneOf(p.rec) + ' of 5';
+    overlay.hidden = false;
+    $('#m-x').focus();
+    playCry(d.id);
+  }
+  function closeModal() {
+    stopCry();
+    overlay.hidden = true;
+    if (openPet) { openPet.paused = false; openPet.hover = false; openPet = null; }
+    if (lastFocus && document.contains(lastFocus)) lastFocus.focus(); else $('#add').focus();
+    lastFocus = null;
+  }
+  art.addEventListener('load', function () { art.classList.add('ready'); });
+  art.addEventListener('error', function () {
+    if (!openPet) return;
+    var step = +art.dataset.step;
+    if (step === 0) { art.dataset.step = '1'; art.classList.add('pix'); art.src = SPRITE(openPet.rec.id); }
+    else if (step === 1) { art.dataset.step = '2'; art.src = BALL; }
+  });
+  $('#m-x').addEventListener('click', closeModal);
+  $('#m-cry').addEventListener('click', function () { if (openPet) playCry(openPet.rec.id); });
+  $('#m-release').addEventListener('click', function () {
+    if (!openPet) return;
+    var p = openPet, name = dex[p.rec.id - 1].name;
+    removePet(p);
+    closeModal();
+    toast(name + ' was released. Bye-bye!');
+  });
+  overlay.addEventListener('click', function (e) { if (e.target === overlay) closeModal(); });
+  document.addEventListener('keydown', function (e) {
+    if (overlay.hidden) return;
+    if (e.key === 'Escape') { e.preventDefault(); closeModal(); return; }
+    if (e.key === 'Tab') {
+      var f = [$('#m-x'), $('#m-cry'), $('#m-release')];
+      var i = f.indexOf(document.activeElement);
+      e.preventDefault();
+      f[(i + (e.shiftKey ? f.length - 1 : 1)) % f.length].focus();
+    }
+  });
+
+  /* open from the habitat */
+  function petFromEvent(e) {
+    var el = e.target.closest ? e.target.closest('.pet') : null;
+    if (!el) return null;
+    for (var i = 0; i < pets.length; i++) if (pets[i].rec.uid === el.dataset.uid) return pets[i];
+    return null;
+  }
+  petsEl.addEventListener('click', function (e) { var p = petFromEvent(e); if (p) openModal(p); });
+  petsEl.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var p = petFromEvent(e);
+    if (p) { e.preventDefault(); openModal(p); }
+  });
+
+  /* ---------- toast ---------- */
+  var toastTimer = 0;
+  function toast(msg) {
+    var t = $('#toast');
+    t.textContent = msg;
+    t.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove('on'); }, 2400);
+  }
+
+  /* ---------- searchable dropdown ---------- */
+  var input = $('#search'), listEl = $('#dexlist');
+  var sel = null, filtered = dex.slice(), act = -1;
+  var select = $('#pokemonSelect'), addBtn = $('#add');
+  dex.forEach(function (d) {
+    var o = document.createElement('option');
+    o.value = String(d.id); o.textContent = d.name;
+    select.appendChild(o);
+  });
+  function updateAdd() { addBtn.disabled = !sel || !select.value; }
+
+  function norm(s) { return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+  function filterDex(q) {
+    var s = norm(q.trim()).replace(/^#/, '');
+    if (!s) return dex.slice();
+    var starts = [], rest = [];
+    dex.forEach(function (d) {
+      var nm = norm(d.name);
+      if (nm.indexOf(s) === 0) starts.push(d);
+      else if (nm.indexOf(s) > 0 || (/^\d+$/.test(s) && String(d.id).padStart(3, '0').indexOf(s) >= 0)) rest.push(d);
+    });
+    return starts.concat(rest);
+  }
+  function renderList() {
+    listEl.innerHTML = '';
+    if (!filtered.length) {
+      var none = document.createElement('li');
+      none.className = 'none'; none.textContent = 'No Pokémon match';
+      listEl.appendChild(none);
+      return;
+    }
+    filtered.forEach(function (d, i) {
+      var li = document.createElement('li');
+      li.setAttribute('role', 'option');
+      li.id = 'opt-' + d.id;
+      li.dataset.i = String(i);
+      li.className = (i === act ? 'active ' : '') + (sel && d.id === sel.id ? 'cur' : '');
+      li.setAttribute('aria-selected', i === act ? 'true' : 'false');
+      var n = document.createElement('span'); n.className = 'n'; n.textContent = '#' + String(d.id).padStart(3, '0');
+      var nm = document.createElement('span'); nm.textContent = d.name;
+      li.appendChild(n); li.appendChild(nm);
+      listEl.appendChild(li);
+    });
+  }
+  function ensureVisible(li) {
+    if (!li) return;
+    if (li.offsetTop < listEl.scrollTop) listEl.scrollTop = li.offsetTop;
+    else if (li.offsetTop + li.offsetHeight > listEl.scrollTop + listEl.clientHeight) listEl.scrollTop = li.offsetTop + li.offsetHeight - listEl.clientHeight;
+  }
+  function setActive(i) {
+    var old = listEl.querySelector('li.active');
+    if (old) { old.classList.remove('active'); old.setAttribute('aria-selected', 'false'); }
+    act = i;
+    var li = listEl.querySelector('li[data-i="' + i + '"]');
+    if (li) {
+      li.classList.add('active'); li.setAttribute('aria-selected', 'true');
+      input.setAttribute('aria-activedescendant', li.id);
+      ensureVisible(li);
+    }
+  }
+  function openList() {
+    filtered = filterDex('');
+    act = filtered.indexOf(sel);
+    renderList();
+    listEl.hidden = false;
+    input.setAttribute('aria-expanded', 'true');
+    var a = listEl.querySelector('li.active');
+    if (a) listEl.scrollTop = Math.max(0, a.offsetTop - listEl.clientHeight / 2 + a.offsetHeight / 2);
+  }
+  function closeList() {
+    listEl.hidden = true;
+    input.setAttribute('aria-expanded', 'false');
+    input.removeAttribute('aria-activedescendant');
+    input.value = sel ? sel.name : '';
+  }
+  function choose(d) {
+    if (!d) return;
+    sel = d;
+    select.value = String(d.id);
+    updateAdd();
+    closeList();
+    input.blur();
+  }
+
+  input.value = '';
+  updateAdd();
+  input.addEventListener('focus', function () { openList(); setTimeout(function () { try { input.select(); } catch (e) {} }, 0); });
+  input.addEventListener('click', function () { if (listEl.hidden) { openList(); input.select(); } });
+  input.addEventListener('blur', closeList);
+  input.addEventListener('input', function () {
+    filtered = filterDex(input.value);
+    act = filtered.length ? 0 : -1;
+    renderList();
+    listEl.hidden = false;
+    input.setAttribute('aria-expanded', 'true');
+    listEl.scrollTop = 0;
+    if (act === 0) setActive(0);
+  });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (listEl.hidden) { openList(); return; }
+      if (!filtered.length) return;
+      var n = filtered.length;
+      setActive(act < 0 ? 0 : (act + (e.key === 'ArrowDown' ? 1 : n - 1)) % n);
+    } else if (e.key === 'Enter') {
+      if (!listEl.hidden) {
+        e.preventDefault();
+        if (act >= 0) choose(filtered[act]); else closeList();
+      }
+    } else if (e.key === 'Escape') {
+      if (!listEl.hidden) { e.preventDefault(); closeList(); }
+    }
+  });
+  listEl.addEventListener('mousedown', function (e) { e.preventDefault(); });
+  listEl.addEventListener('click', function (e) {
+    var li = e.target.closest('li[data-i]');
+    if (li) choose(filtered[+li.dataset.i]);
+  });
+  $('#picker').addEventListener('submit', function (e) { e.preventDefault(); if (sel && select.value) spawn(sel); });
+
+  /* optional live list from PokéAPI; the built-in list above is the fallback */
+  function syncDex() {
+    if (typeof fetch !== 'function') return;
+    var ctl = typeof AbortController === 'function' ? new AbortController() : null;
+    var to = setTimeout(function () { if (ctl) ctl.abort(); }, 6000);
+    fetch(API_LIST, ctl ? { signal: ctl.signal } : undefined)
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        clearTimeout(to);
+        if (!j || !Array.isArray(j.results) || j.results.length !== 151) return;
+        j.results.forEach(function (r) {
+          var id = parseInt(String(r.url).split('/').filter(Boolean).pop(), 10);
+          if (id >= 1 && id <= 151 && typeof r.name === 'string') dex[id - 1].name = pretty(r.name);
+        });
+        liveDex = true;
+        pets.forEach(function (p) {
+          var nm = dex[p.rec.id - 1].name;
+          p.tag.textContent = nm;
+          p.el.setAttribute('aria-label', 'Inspect ' + nm);
+        });
+        dex.forEach(function (d, i) { select.options[i + 1].textContent = d.name; });
+        if (listEl.hidden) input.value = sel ? sel.name : '';
+        updateHud();
+      })
+      .catch(function () { clearTimeout(to); });
+  }
+
+  /* ---------- sizing ---------- */
+  function measure() {
+    var r = habitat.getBoundingClientRect();
+    var nw = Math.max(1, Math.floor(r.width)), nh = Math.max(1, Math.floor(r.height));
+    if (nw === W && nh === H) return;
+    W = nw; H = nh;
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    bgc.width = Math.round(W * DPR);
+    bgc.height = Math.round(H * DPR);
+    buildScene();
+    GT = GTB * PXS;
+    GH = Math.max(1, H - GT);
+    pets.forEach(layoutPet);
+  }
+
+  /* ---------- main loop ---------- */
+  var last = performance.now();
+  function frame(now) {
+    if (!W || !H) measure();
+    var dt = Math.min(64, now - last) / 16.667;
+    last = now;
+    paint(dt);
+    for (var i = 0; i < pets.length; i++) {
+      var p = pets[i];
+      var target = (p.paused || p.hover) ? 0 : p.rec.speed;
+      p.cur += (target - p.cur) * Math.min(1, 0.18 * dt);
+      if (target === 0 && p.cur < 0.01) p.cur = 0;
+      p.x += p.cur * dt;
+      if (p.x - p.w / 2 > W + 8) p.x = -p.w / 2 - 8 - Math.random() * 80;
+      p.el.style.transform = 'translate3d(' + p.x.toFixed(2) + 'px,' + p.y.toFixed(2) + 'px,0)';
+    }
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- boot ---------- */
+  measure();
+  try { localStorage.removeItem('pokemon-habitat-roster-v1'); } catch (e) { /* old starter data cleared when possible */ }
+  var saved = loadRoster() || [];
+  saved.forEach(function (rec) { addPet(rec); });
+  save();
+  updateHud();
+  if (typeof ResizeObserver === 'function') new ResizeObserver(measure).observe(habitat);
+  window.addEventListener('resize', measure);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+  syncDex();
+  requestAnimationFrame(function (t) { last = t; frame(t); });
+})();
+</script>
+
+</body></html>
